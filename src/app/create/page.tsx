@@ -1,6 +1,5 @@
 'use client'
-import { Suspense, useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
 import Link from 'next/link'
 
 export default function CreatePage() {
@@ -12,13 +11,10 @@ export default function CreatePage() {
 }
 
 function CreateContent() {
-  const searchParams = useSearchParams()
-  const ref = searchParams.get('ref') || ''
-
-  const [refInput, setRefInput] = useState(ref)
-  const [refValid, setRefValid] = useState(false)
-  const [refError, setRefError] = useState('')
-  const [refChecking, setRefChecking] = useState(false)
+  const [password, setPassword] = useState('')
+  const [passwordValid, setPasswordValid] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordChecking, setPasswordChecking] = useState(false)
   const [form, setForm] = useState({
     ownerEmail: '',
     appName: '',
@@ -39,24 +35,29 @@ function CreateContent() {
     green: '#2da894', greenGrad: 'linear-gradient(135deg, #41c9b0 0%, #2da894 100%)',
   }
 
-  // URLにrefがあれば自動検証
-  useEffect(() => {
-    if (ref) checkRef(ref)
-  }, [ref])
+  const inputStyle = {
+    width: '100%', border: `1.5px solid ${C.border}`, borderRadius: 10,
+    padding: '11px 13px', fontSize: 14, color: C.text, background: C.bg,
+    outline: 'none', boxSizing: 'border-box' as const, marginBottom: 12, fontFamily: 'inherit',
+  }
+  const labelStyle = {
+    fontSize: 11, fontWeight: 700, color: C.textMid, marginBottom: 5, display: 'block',
+  }
 
-  async function checkRef(r: string) {
-    setRefChecking(true)
-    setRefError('')
-    const res = await fetch(`/api/refs?ref=${r}`)
-    const data = await res.json()
-    if (data.valid) {
-      setRefValid(true)
+  async function checkPassword() {
+    setPasswordChecking(true)
+    setPasswordError('')
+    const res = await fetch('/api/verify-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password }),
+    })
+    if (res.ok) {
+      setPasswordValid(true)
     } else {
-      if (data.reason === 'used') setRefError('このコードはすでに使用済みです')
-      else if (data.reason === 'expired') setRefError('このコードは期限切れです')
-      else setRefError('コードが正しくありません')
+      setPasswordError('合言葉が正しくありません')
     }
-    setRefChecking(false)
+    setPasswordChecking(false)
   }
 
   async function handleCreate() {
@@ -75,7 +76,6 @@ function CreateContent() {
         description,
         store_url: storeUrl,
         owner_email: ownerEmail,
-        ref: refInput,
       }),
     })
     const data = await res.json()
@@ -86,15 +86,6 @@ function CreateContent() {
     }
     setDone(true)
     setSubmitting(false)
-  }
-
-  const inputStyle = {
-    width: '100%', border: `1.5px solid ${C.border}`, borderRadius: 10,
-    padding: '11px 13px', fontSize: 14, color: C.text, background: C.bg,
-    outline: 'none', boxSizing: 'border-box' as const, marginBottom: 12, fontFamily: 'inherit',
-  }
-  const labelStyle = {
-    fontSize: 11, fontWeight: 700, color: C.textMid, marginBottom: 5, display: 'block',
   }
 
   return (
@@ -113,7 +104,6 @@ function CreateContent() {
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '28px 16px 60px' }}>
         {done ? (
-          /* 作成完了 */
           <div style={{ background: '#f0faf6', border: '1.5px solid #2da894', borderRadius: 16, padding: '32px 20px', textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🎉</div>
             <div style={{ fontSize: 18, fontWeight: 800, color: '#1a6b5a', marginBottom: 10 }}>ルームを作成しました！</div>
@@ -126,35 +116,48 @@ function CreateContent() {
               一覧ページを見る 🚪
             </Link>
           </div>
-        ) : !refValid ? (
-          /* refなし → noteへ誘導のみ */
+
+        ) : !passwordValid ? (
+          /* STEP1: 合言葉入力 */
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24 }}>
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>ルームを作る</div>
-            <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.75, marginBottom: 8 }}>
-              テスタドアでアプリのテスターを集めませんか？
-            </div>
             <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.75, marginBottom: 20 }}>
-              noteの登録記事（100円）を購入すると、記事内の専用リンクからそのままルームを作成できます。
-              面倒な設定は一切不要、購入→リンク→登録の3ステップだけです。
+              テスタドアでアプリのテスターを集めませんか？<br />
+              noteの登録記事（100円）を購入すると、合言葉が記載されています。
             </div>
-            {refError && (
-              <div style={{ background: '#fff0f0', border: '1px solid #e57373', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c0392b', marginBottom: 16 }}>
-                {refError}
-              </div>
-            )}
             <a href="https://note.com" target="_blank" rel="noreferrer"
-              style={{ display: 'block', background: C.accentGrad, color: '#fff', borderRadius: 12, padding: 14, textAlign: 'center', fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+              style={{ display: 'block', background: C.greenGrad, color: '#fff', borderRadius: 12, padding: 14, textAlign: 'center', fontWeight: 700, fontSize: 14, textDecoration: 'none', marginBottom: 20 }}>
               noteで購入する（100円）→
             </a>
-            <div style={{ marginTop: 16, fontSize: 12, color: C.textLight, textAlign: 'center', lineHeight: 1.7 }}>
-              購入後、記事内のリンクをクリックすると<br />自動でこのページに戻ってきます
+            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
+              <label style={labelStyle}>購入後、記事内の合言葉を入力</label>
+              <input
+                style={inputStyle}
+                type="password"
+                placeholder="合言葉"
+                value={password}
+                onChange={e => { setPassword(e.target.value); setPasswordError('') }}
+                onKeyDown={e => e.key === 'Enter' && checkPassword()}
+              />
+              {passwordError && (
+                <div style={{ background: '#fff0f0', border: '1px solid #e57373', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c0392b', marginBottom: 12 }}>
+                  {passwordError}
+                </div>
+              )}
+              <button
+                onClick={checkPassword}
+                disabled={!password || passwordChecking}
+                style={{ width: '100%', padding: 13, background: (!password || passwordChecking) ? '#e8e0d0' : C.accentGrad, color: (!password || passwordChecking) ? '#a09890' : '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: (!password || passwordChecking) ? 'not-allowed' : 'pointer' }}>
+                {passwordChecking ? '確認中...' : '確認する'}
+              </button>
             </div>
           </div>
+
         ) : (
           /* STEP2: アプリ情報入力 */
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24 }}>
             <div style={{ background: '#f0faf6', border: '1.5px solid #2da894', borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20, fontSize: 13, color: '#1a6b5a', fontWeight: 600 }}>
-              ✅ note購入が確認できました
+              ✅ 認証できました
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>アプリ情報を入力</div>
             <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.75, marginBottom: 20 }}>

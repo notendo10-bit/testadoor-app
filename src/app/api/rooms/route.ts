@@ -23,26 +23,12 @@ export async function GET() {
 
 export async function POST(req: Request) {
   const body = await req.json()
-  const { app_name, description, store_url, owner_email, ref } = body
+  const { app_name, description, store_url, owner_email } = body
 
-  // ref検証
-  const { data: refData, error: refError } = await supabase
-    .from('create_refs')
-    .select('*')
-    .eq('ref', ref)
-    .single()
-
-  if (refError || !refData) {
-    return NextResponse.json({ error: 'Invalid ref' }, { status: 400 })
-  }
-  if (refData.used) {
-    return NextResponse.json({ error: 'Ref already used' }, { status: 400 })
-  }
-  if (new Date(refData.expires_at) < new Date()) {
-    return NextResponse.json({ error: 'Ref expired' }, { status: 400 })
+  if (!app_name || !description || !store_url || !owner_email) {
+    return NextResponse.json({ error: '入力が不足しています' }, { status: 400 })
   }
 
-  // ルーム作成
   const { data: room, error: roomError } = await supabase
     .from('rooms')
     .insert({ app_name, description, store_url, owner_email })
@@ -51,13 +37,6 @@ export async function POST(req: Request) {
 
   if (roomError) return NextResponse.json({ error: roomError }, { status: 500 })
 
-  // ref使用済みに
-  await supabase
-    .from('create_refs')
-    .update({ used: true, owner_email })
-    .eq('ref', ref)
-
-  // X自動投稿
   await postToX(app_name, description, store_url, room.id)
 
   return NextResponse.json(room)
