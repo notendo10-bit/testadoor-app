@@ -127,39 +127,27 @@ function CreateContent() {
             </Link>
           </div>
         ) : !refValid ? (
-          /* STEP1: ref認証 */
+          /* refなし → noteへ誘導のみ */
           <div style={{ background: C.white, borderRadius: 16, border: `1px solid ${C.border}`, padding: 24 }}>
             <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 6 }}>ルームを作る</div>
-            <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.75, marginBottom: 20 }}>
-              ルーム作成にはnoteの登録記事（100円）の購入が必要です。
-              購入後、記事内のリンクからアクセスすると自動で認証されます。
+            <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.75, marginBottom: 8 }}>
+              テスタドアでアプリのテスターを集めませんか？
             </div>
-            <a href="https://note.com" target="_blank" rel="noreferrer"
-              style={{ display: 'block', background: C.greenGrad, color: '#fff', borderRadius: 12, padding: 14, textAlign: 'center', fontWeight: 700, fontSize: 14, textDecoration: 'none', marginBottom: 20 }}>
-              noteで記事を購入する（100円）→
-            </a>
-            <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: 16 }}>
-              <div style={{ fontSize: 12, color: C.textLight, marginBottom: 10, textAlign: 'center' }}>
-                すでに購入済みの方
+            <div style={{ fontSize: 13, color: C.textMid, lineHeight: 1.75, marginBottom: 20 }}>
+              noteの登録記事（100円）を購入すると、記事内の専用リンクからそのままルームを作成できます。
+              面倒な設定は一切不要、購入→リンク→登録の3ステップだけです。
+            </div>
+            {refError && (
+              <div style={{ background: '#fff0f0', border: '1px solid #e57373', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c0392b', marginBottom: 16 }}>
+                {refError}
               </div>
-              <label style={labelStyle}>refコードを入力</label>
-              <input
-                style={inputStyle}
-                placeholder="記事内のリンクに含まれるコード"
-                value={refInput}
-                onChange={e => { setRefInput(e.target.value); setRefError('') }}
-              />
-              {refError && (
-                <div style={{ background: '#fff0f0', border: '1px solid #e57373', borderRadius: 8, padding: '10px 12px', fontSize: 13, color: '#c0392b', marginBottom: 12 }}>
-                  {refError}
-                </div>
-              )}
-              <button
-                onClick={() => checkRef(refInput)}
-                disabled={!refInput || refChecking}
-                style={{ width: '100%', padding: 13, background: (!refInput || refChecking) ? '#e8e0d0' : C.accentGrad, color: (!refInput || refChecking) ? '#a09890' : '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: (!refInput || refChecking) ? 'not-allowed' : 'pointer' }}>
-                {refChecking ? '確認中...' : '認証する'}
-              </button>
+            )}
+            <a href="https://note.com" target="_blank" rel="noreferrer"
+              style={{ display: 'block', background: C.accentGrad, color: '#fff', borderRadius: 12, padding: 14, textAlign: 'center', fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>
+              noteで購入する（100円）→
+            </a>
+            <div style={{ marginTop: 16, fontSize: 12, color: C.textLight, textAlign: 'center', lineHeight: 1.7 }}>
+              購入後、記事内のリンクをクリックすると<br />自動でこのページに戻ってきます
             </div>
           </div>
         ) : (
